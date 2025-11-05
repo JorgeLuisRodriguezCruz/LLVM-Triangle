@@ -1,0 +1,11 @@
+let
+   var a: Integer;
+   var b: Integer;
+   var result: Integer	
+in
+   begin
+   result:= 0;
+   a:= 3;
+   b:= 4;
+   result:= a+b;
+   end

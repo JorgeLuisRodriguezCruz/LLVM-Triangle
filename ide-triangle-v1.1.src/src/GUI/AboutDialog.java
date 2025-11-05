@@ -39,12 +39,11 @@ public class AboutDialog extends javax.swing.JDialog {
     }
     // </editor-fold>
     
-    // <editor-fold defaultstate="collapsed" desc=" Generated Code ">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         pack();
-    }
-    // </editor-fold>//GEN-END:initComponents
+    }// </editor-fold>//GEN-END:initComponents
     
     // <editor-fold defaultstate="collapsed" desc=" Attributes ">
     // Variables declaration - do not modify//GEN-BEGIN:variables
