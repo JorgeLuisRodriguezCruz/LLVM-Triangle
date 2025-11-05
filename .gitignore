@@ -3,3 +3,6 @@
 *.tmp
 private.properties
 /ide-triangle-v1.1.src/dist/
+/ide-triangle-v1.1.src/build/
+/Triangle/build/
+/Triangle/dist/

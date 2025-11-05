@@ -29,10 +29,13 @@ import java.io.FileWriter;
 import javax.swing.ImageIcon;
 import java.awt.Image;
 import javax.swing.JFileChooser;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.LookAndFeel;
 import javax.swing.UIManager;
 import Triangle.IDECompiler;
+import Triangle.IDEMultiBackendCompiler;
+import Triangle.IDEMultiBackendCompiler.BackendType;
 import Core.ExampleFileFilter;
 import javax.swing.event.InternalFrameEvent;
 import javax.swing.event.InternalFrameListener;
@@ -487,6 +490,21 @@ public class Main extends javax.swing.JFrame {
         });
 
         triangleMenu.add(runMenuItem);
+        
+        // Add separator and backend selection menu
+        triangleMenu.addSeparator();
+        
+        JMenuItem backendMenuItem = new JMenuItem();
+        backendMenuItem.setMnemonic('B');
+        backendMenuItem.setText("Select Backend...");
+        backendMenuItem.setToolTipText("Choose compilation backend (TAM, LLVM IR, or both)");
+        backendMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                selectBackendMenuItemActionPerformed(evt);
+            }
+        });
+        
+        triangleMenu.add(backendMenuItem);
 
         menuBar.add(triangleMenu);
 
@@ -611,24 +629,61 @@ public class Main extends javax.swing.JFrame {
             ((FileFrame)desktopPane.getSelectedFrame()).clearTAMCode();
             ((FileFrame)desktopPane.getSelectedFrame()).clearTree();
             ((FileFrame)desktopPane.getSelectedFrame()).clearTable();
-            new File(desktopPane.getSelectedFrame().getTitle().replace(".tri", ".tam")).delete();
             
-            output.setDelegate(delegateConsole);            
-            if (compiler.compileProgram(desktopPane.getSelectedFrame().getTitle())) {           
-                output.setDelegate(delegateTAMCode);
-                disassembler.Disassemble(desktopPane.getSelectedFrame().getTitle().replace(".tri", ".tam"));
-                ((FileFrame)desktopPane.getSelectedFrame()).setTree((DefaultMutableTreeNode)treeVisitor.visitProgram(compiler.getAST(), null));
-                ((FileFrame)desktopPane.getSelectedFrame()).setTable(tableVisitor.getTable(compiler.getAST()));
+            String filename = desktopPane.getSelectedFrame().getTitle();
+            new File(filename.replace(".tri", ".tam")).delete();
+            new File(filename.replace(".tri", ".ll")).delete();
+            
+            output.setDelegate(delegateConsole);
+            
+            // Use multi-backend compiler with selected backend
+            boolean success = multiCompiler.compileProgram(filename, currentBackend);
+            
+            if (success) {           
+                // Show TAM code if TAM backend was used
+                if (currentBackend == BackendType.TAM || currentBackend == BackendType.BOTH) {
+                    output.setDelegate(delegateTAMCode);
+                    disassembler.Disassemble(filename.replace(".tri", ".tam"));
+                }
                 
-                runMenuItem.setEnabled(true);
-                buttonRun.setEnabled(true);
+                // Get AST from the multi-backend compiler
+                ((FileFrame)desktopPane.getSelectedFrame()).setTree((DefaultMutableTreeNode)treeVisitor.visitProgram(multiCompiler.getAST(), null));
+                ((FileFrame)desktopPane.getSelectedFrame()).setTable(tableVisitor.getTable(multiCompiler.getAST()));
+                
+                runMenuItem.setEnabled(currentBackend == BackendType.TAM || currentBackend == BackendType.BOTH);
+                buttonRun.setEnabled(currentBackend == BackendType.TAM || currentBackend == BackendType.BOTH);
+                
+                // Show success message with generated files
+                showCompilationResults(filename);
             } else {
-                ((FileFrame)desktopPane.getSelectedFrame()).highlightError(compiler.getErrorPosition());
+                ((FileFrame)desktopPane.getSelectedFrame()).highlightError(multiCompiler.getErrorPosition());
                 runMenuItem.setEnabled(false);
                 buttonRun.setEnabled(false);
             }
         }
     }//GEN-LAST:event_compileMenuItemActionPerformed
+    
+    /**
+     * Show compilation results message
+     */
+    private void showCompilationResults(String filename) {
+        StringBuilder message = new StringBuilder("Compilation successful!\n\nGenerated files:\n");
+        
+        switch (currentBackend) {
+            case TAM:
+                message.append("• ").append(filename.replace(".tri", ".tam")).append(" (TAM assembly)");
+                break;
+            case LLVM_IR:
+                message.append("• ").append(filename.replace(".tri", ".ll")).append(" (LLVM IR)");
+                break;
+            case BOTH:
+                message.append("• ").append(filename.replace(".tri", ".tam")).append(" (TAM assembly)\n");
+                message.append("• ").append(filename.replace(".tri", ".ll")).append(" (LLVM IR)");
+                break;
+        }
+        
+        ((FileFrame)desktopPane.getSelectedFrame()).writeToConsole("\n" + message.toString() + "\n");
+    }
 
     /**
      * Handles the "Save" button and menu option.
@@ -689,6 +744,54 @@ public class Main extends javax.swing.JFrame {
         formWindowClosing(null);
         System.exit(0);
     }//GEN-LAST:event_exitMenuItemActionPerformed
+
+    /**
+     * Handles the "Select Backend" menu option.
+     */
+    private void selectBackendMenuItemActionPerformed(java.awt.event.ActionEvent evt) {
+        BackendSelectionDialog dialog = new BackendSelectionDialog(this);
+        dialog.setSelectedBackend(currentBackend);
+        
+        BackendType selectedBackend = dialog.showDialog();
+        if (selectedBackend != null && !dialog.wasCancelled()) {
+            currentBackend = selectedBackend;
+            
+            // Update the title bar to show current backend
+            String backendText = "";
+            switch (currentBackend) {
+                case TAM:
+                    backendText = " [TAM]";
+                    break;
+                case LLVM_IR:
+                    backendText = " [LLVM IR]";
+                    break;
+                case BOTH:
+                    backendText = " [TAM + LLVM IR]";
+                    break;
+            }
+            setTitle("IDE-Triangle 1.1" + backendText);
+            
+            // Show confirmation message
+            String message = "Backend changed to: " + getBackendDisplayName(currentBackend);
+            JOptionPane.showMessageDialog(this, message, "Backend Selection", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+    
+    /**
+     * Get display name for backend type
+     */
+    private String getBackendDisplayName(BackendType backend) {
+        switch (backend) {
+            case TAM:
+                return "TAM (Triangle Abstract Machine)";
+            case LLVM_IR:
+                return "LLVM IR (LLVM Intermediate Representation)";
+            case BOTH:
+                return "Both TAM and LLVM IR";
+            default:
+                return "Unknown";
+        }
+    }
 
     // </editor-fold>    
            
@@ -856,7 +959,9 @@ public class Main extends javax.swing.JFrame {
     // [ Non-GUI variables declaration ]
     int untitledCount = 1;                                                  // Counts "Untitled" document names (e.g. "Untitled-1")
     clipBoard Clip = new clipBoard();                                       // Clipboard Management
-    IDECompiler compiler = new IDECompiler();                               // Compiler - Analyzes/generates TAM programs
+    IDECompiler compiler = new IDECompiler();                               // Legacy Compiler - Analyzes/generates TAM programs  
+    IDEMultiBackendCompiler multiCompiler = new IDEMultiBackendCompiler();  // Multi-Backend Compiler - Analyzes/generates TAM and LLVM IR
+    BackendType currentBackend = BackendType.BOTH;                          // Current selected backend
     IDEDisassembler disassembler = new IDEDisassembler();                   // Disassembler - Generates TAM Code
     IDEInterpreter interpreter = new IDEInterpreter(delegateRun);           // Interpreter - Runs TAM programs
     OutputRedirector output = new OutputRedirector();                       // Redirects the console output
