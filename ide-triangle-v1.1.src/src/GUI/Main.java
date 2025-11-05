@@ -128,8 +128,7 @@ public class Main extends javax.swing.JFrame {
         copyMenuItem.setEnabled(true);
         pasteMenuItem.setEnabled(true);
         compileMenuItem.setEnabled(true);
-        buttonCompile.setEnabled(true);
-        llvmWindowMenuItem.setEnabled(true);
+        buttonCompile.setEnabled(true); 
        
         checkSaveChanges();        
         return(x);
@@ -519,6 +518,9 @@ public class Main extends javax.swing.JFrame {
         ((FileFrame)desktopPane.getSelectedFrame()).selectConsole();
         output.setDelegate(delegateConsole);
         runMenuItem.setEnabled(false);
+        
+        llvmWindowMenuItem.setEnabled(false);
+                
         buttonRun.setEnabled(false);
         compileMenuItem.setEnabled(false);
         buttonCompile.setEnabled(false);
@@ -620,10 +622,14 @@ public class Main extends javax.swing.JFrame {
                 
                 runMenuItem.setEnabled(true);
                 buttonRun.setEnabled(true);
+                
+                llvmWindowMenuItem.setEnabled(true);
             } else {
                 ((FileFrame)desktopPane.getSelectedFrame()).highlightError(compiler.getErrorPosition());
                 runMenuItem.setEnabled(false);
                 buttonRun.setEnabled(false);
+                
+                llvmWindowMenuItem.setEnabled(false);
             }
         }
     }//GEN-LAST:event_compileMenuItemActionPerformed
@@ -815,6 +821,8 @@ public class Main extends javax.swing.JFrame {
             buttonRun.setEnabled(true);
             compileMenuItem.setEnabled(true);
             buttonCompile.setEnabled(true);
+            
+            llvmWindowMenuItem.setEnabled(true);
         }
     };
     // </editor-fold>

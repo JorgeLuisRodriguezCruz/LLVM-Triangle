@@ -24,12 +24,18 @@ public class LLVMFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
+        jTabbedPane1 = new javax.swing.JTabbedPane();
+        sourceScroll = new javax.swing.JScrollPane();
+        sourceTextArea = new javax.swing.JTextArea();
+        llvmScroll = new javax.swing.JScrollPane();
         llvmTextArea = new javax.swing.JTextArea();
+        machineScroll = new javax.swing.JScrollPane();
+        machineTextArea = new javax.swing.JTextArea();
         jMenuBar1 = new javax.swing.JMenuBar();
         MenuLLVM = new javax.swing.JMenu();
         itmeCompileLLVM = new javax.swing.JMenuItem();
         itemSaveLLVM = new javax.swing.JMenuItem();
+        itemCompileLLVMToNative = new javax.swing.JMenuItem();
         itemRunLLVM = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -39,13 +45,28 @@ public class LLVMFrame extends javax.swing.JFrame {
         setMinimumSize(new java.awt.Dimension(208, 36));
         setPreferredSize(new java.awt.Dimension(766, 400));
 
+        sourceTextArea.setEditable(false);
+        sourceTextArea.setColumns(20);
+        sourceTextArea.setRows(5);
+        sourceScroll.setViewportView(sourceTextArea);
+
+        jTabbedPane1.addTab("Código fuente Triangle", sourceScroll);
+
         llvmTextArea.setEditable(false);
         llvmTextArea.setColumns(20);
-        llvmTextArea.setFont(new java.awt.Font("Courier New", 1, 12)); // NOI18N
         llvmTextArea.setRows(5);
-        jScrollPane1.setViewportView(llvmTextArea);
+        llvmScroll.setViewportView(llvmTextArea);
 
-        getContentPane().add(jScrollPane1, java.awt.BorderLayout.CENTER);
+        jTabbedPane1.addTab("Código LLVM (IR)", llvmScroll);
+
+        machineTextArea.setEditable(false);
+        machineTextArea.setColumns(20);
+        machineTextArea.setRows(5);
+        machineScroll.setViewportView(machineTextArea);
+
+        jTabbedPane1.addTab("Código máquina", machineScroll);
+
+        getContentPane().add(jTabbedPane1, java.awt.BorderLayout.CENTER);
 
         MenuLLVM.setText("LLVM");
 
@@ -60,10 +81,29 @@ public class LLVMFrame extends javax.swing.JFrame {
 
         itemSaveLLVM.setIcon(new javax.swing.ImageIcon(getClass().getResource("/GUI/Icons/iconFileSave.gif"))); // NOI18N
         itemSaveLLVM.setText("Guardar código LLVM");
+        itemSaveLLVM.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                itemSaveLLVMActionPerformed(evt);
+            }
+        });
         MenuLLVM.add(itemSaveLLVM);
 
+        itemCompileLLVMToNative.setIcon(new javax.swing.ImageIcon(getClass().getResource("/GUI/Icons/iconFileNew.gif"))); // NOI18N
+        itemCompileLLVMToNative.setText("Compilar LLVM a código nativo");
+        itemCompileLLVMToNative.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                itemCompileLLVMToNativeActionPerformed(evt);
+            }
+        });
+        MenuLLVM.add(itemCompileLLVMToNative);
+
         itemRunLLVM.setIcon(new javax.swing.ImageIcon(getClass().getResource("/GUI/Icons/iconTriangleRun.gif"))); // NOI18N
-        itemRunLLVM.setText("Ejecutar código LLVM");
+        itemRunLLVM.setText("Ejecutar código LLVM en Shell");
+        itemRunLLVM.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                itemRunLLVMActionPerformed(evt);
+            }
+        });
         MenuLLVM.add(itemRunLLVM);
 
         jMenuBar1.add(MenuLLVM);
@@ -77,6 +117,24 @@ public class LLVMFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_itmeCompileLLVMActionPerformed
 
+    private void itemSaveLLVMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_itemSaveLLVMActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_itemSaveLLVMActionPerformed
+
+    private void itemCompileLLVMToNativeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_itemCompileLLVMToNativeActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_itemCompileLLVMToNativeActionPerformed
+
+    private void itemRunLLVMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_itemRunLLVMActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_itemRunLLVMActionPerformed
+
+    
+    // <editor-fold defaultstate="collapsed" desc=" Metodos ">
+    
+    // <editor-fold>
+    
+    
     /**
      * @param args the command line arguments
      */
@@ -114,11 +172,17 @@ public class LLVMFrame extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenu MenuLLVM;
+    private javax.swing.JMenuItem itemCompileLLVMToNative;
     private javax.swing.JMenuItem itemRunLLVM;
     private javax.swing.JMenuItem itemSaveLLVM;
     private javax.swing.JMenuItem itmeCompileLLVM;
     private javax.swing.JMenuBar jMenuBar1;
-    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JScrollPane llvmScroll;
     private javax.swing.JTextArea llvmTextArea;
+    private javax.swing.JScrollPane machineScroll;
+    private javax.swing.JTextArea machineTextArea;
+    private javax.swing.JScrollPane sourceScroll;
+    private javax.swing.JTextArea sourceTextArea;
     // End of variables declaration//GEN-END:variables
 }
