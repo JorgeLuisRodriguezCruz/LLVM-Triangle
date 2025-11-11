@@ -695,7 +695,30 @@ public class Main extends javax.swing.JFrame {
     }//GEN-LAST:event_exitMenuItemActionPerformed
 
     private void llvmWindowMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_llvmWindowMenuItemActionPerformed
-        new LLVMFrame().setVisible(true);
+        /* 1.  Frame activo */
+        FileFrame active = (FileFrame) desktopPane.getSelectedFrame();
+        if (active == null) return;
+
+        /* 2.  Buscar LLVMFrame ya abierto o crearlo */
+        LLVMFrame llvm = null;
+        for (java.awt.Component c : desktopPane.getComponents()) {
+            if (c instanceof LLVMFrame) {
+                llvm = (LLVMFrame) c;
+                break;
+            }
+        }
+        if (llvm == null) {
+            llvm = new LLVMFrame();
+            //desktopPane.add(llvm);
+        }
+
+        /* 3.  Mostrar y traer al frente */
+        llvm.setVisible(true);
+        //try { llvm.setSelected(true); } catch (java.beans.PropertyVetoException ignore) {}
+
+        /* 4.  Copiar el código fuente */
+        llvm.setSourceText(active.getSourcePaneText());       
+        
     }//GEN-LAST:event_llvmWindowMenuItemActionPerformed
 
     // </editor-fold>    

@@ -113,6 +113,9 @@ public class LLVMFrame extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    
+    // <editor-fold defaultstate="collapsed" desc="Metodos ">
+    
     private void itmeCompileLLVMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_itmeCompileLLVMActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_itmeCompileLLVMActionPerformed
@@ -129,10 +132,16 @@ public class LLVMFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_itemRunLLVMActionPerformed
 
+    /* ----------------------------------------------------------
+       Recibe el código fuente Triangle y lo muestra en la 1ª pestaña
+       ---------------------------------------------------------- */
+     public void setSourceText(String code) {
+         sourceTextArea.setText(code);
+         jTabbedPane1.setSelectedIndex(0);   // nos aseguramos de mostrar esa solapa
+     }
     
-    // <editor-fold defaultstate="collapsed" desc=" Metodos ">
-    
-    // <editor-fold>
+    // [ End of Metodos ]
+    // </editor-fold>
     
     
     /**
