@@ -40,6 +40,9 @@ import Core.ExampleFileFilter;
 import javax.swing.event.InternalFrameEvent;
 import javax.swing.event.InternalFrameListener;
 import Core.Visitors.TreeVisitor;
+import static Triangle.IDEMultiBackendCompiler.BackendType.BOTH;
+import static Triangle.IDEMultiBackendCompiler.BackendType.LLVM_IR;
+import static Triangle.IDEMultiBackendCompiler.BackendType.TAM;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
@@ -195,6 +198,7 @@ public class Main extends javax.swing.JFrame {
         triangleMenu = new javax.swing.JMenu();
         compileMenuItem = new javax.swing.JMenuItem();
         runMenuItem = new javax.swing.JMenuItem();
+        backendMenuItem = new javax.swing.JMenuItem();
         llvmWindowMenuItem = new javax.swing.JMenuItem();
         helpMenu = new javax.swing.JMenu();
         aboutMenuItem = new javax.swing.JMenuItem();
@@ -478,12 +482,7 @@ public class Main extends javax.swing.JFrame {
             }
         });
         triangleMenu.add(runMenuItem);
-        
-        // Add separator and backend selection menu
-        triangleMenu.addSeparator();
-        
-        JMenuItem backendMenuItem = new JMenuItem();
-        backendMenuItem.setMnemonic('B');
+
         backendMenuItem.setText("Select Backend...");
         backendMenuItem.setToolTipText("Choose compilation backend (TAM, LLVM IR, or both)");
         backendMenuItem.addActionListener(new java.awt.event.ActionListener() {
@@ -491,7 +490,6 @@ public class Main extends javax.swing.JFrame {
                 selectBackendMenuItemActionPerformed(evt);
             }
         });
-        
         triangleMenu.add(backendMenuItem);
 
         llvmWindowMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F7, 0));
@@ -773,10 +771,11 @@ public class Main extends javax.swing.JFrame {
         llvm.setSourceText(active.getSourcePaneText());       
         
     }//GEN-LAST:event_llvmWindowMenuItemActionPerformed
+
     /**
      * Handles the "Select Backend" menu option.
-     */
-    private void selectBackendMenuItemActionPerformed(java.awt.event.ActionEvent evt) {
+     */    
+    private void selectBackendMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectBackendMenuItemActionPerformed
         BackendSelectionDialog dialog = new BackendSelectionDialog(this);
         dialog.setSelectedBackend(currentBackend);
         
@@ -803,8 +802,8 @@ public class Main extends javax.swing.JFrame {
             String message = "Backend changed to: " + getBackendDisplayName(currentBackend);
             JOptionPane.showMessageDialog(this, message, "Backend Selection", JOptionPane.INFORMATION_MESSAGE);
         }
-    }
-    
+    }//GEN-LAST:event_selectBackendMenuItemActionPerformed
+        
     /**
      * Get display name for backend type
      */
@@ -953,6 +952,7 @@ public class Main extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc=" GUI Variables ">
     // Variables declaration - do not modify//GEN-BEGIN:variables
     javax.swing.JMenuItem aboutMenuItem;
+    javax.swing.JMenuItem backendMenuItem;
     javax.swing.JButton buttonCompile;
     javax.swing.JButton buttonCopy;
     javax.swing.JButton buttonCut;
