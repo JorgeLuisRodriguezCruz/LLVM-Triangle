@@ -92,7 +92,7 @@ import Triangle.AbstractSyntaxTrees.Vname;
 import Triangle.AbstractSyntaxTrees.VnameExpression;
 import Triangle.AbstractSyntaxTrees.WhileCommand;
 
-public final class Encoder implements Visitor {
+public final class Encoder extends AbstractCodeGenerator implements Visitor {
 
 
   // Commands
@@ -720,6 +720,7 @@ public final class Encoder implements Visitor {
   }
 
   public Encoder (ErrorReporter reporter) {
+    super(reporter);
     this.reporter = reporter;
     nextInstrAddr = Machine.CB;
     elaborateStdEnvironment();
@@ -820,6 +821,11 @@ public final class Encoder implements Visitor {
     } catch (IOException s) {
       System.err.println ("Error writing object file: " + s);
     }
+  }
+
+  @Override
+  public String getFileExtension() {
+    return ".tam";
   }
 
   boolean tableDetailsReqd;
