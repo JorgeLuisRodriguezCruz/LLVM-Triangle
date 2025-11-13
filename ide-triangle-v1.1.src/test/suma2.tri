@@ -4,6 +4,6 @@ let
 in
   begin
      i := 3;
-     i := i + 1;
+     i := 4 + 1;
      putint(i)
   end

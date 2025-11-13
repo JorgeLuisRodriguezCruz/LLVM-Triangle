@@ -90,8 +90,9 @@ public class LLVMEncoder extends AbstractCodeGenerator implements Visitor {
         String exprResult = (String) ast.E.visit(this, o);
         
         // Generate code for the variable assignment
-        String varName = ast.V.toString(); // Simplified
-        llvmContext.addInstruction("store i32 " + exprResult + ", i32* %" + varName);
+        //String varName = ast.V.toString(); // Simplified
+        SimpleVname v = (SimpleVname) ast.V;
+        llvmContext.addInstruction("store i32 " + exprResult + ", i32* %" + v.I.spelling);
         
         return null;
     }
@@ -102,14 +103,15 @@ public class LLVMEncoder extends AbstractCodeGenerator implements Visitor {
         String procName = ast.I.spelling;
         
         // Generate arguments
-        String args = (String) ast.APS.visit(this, o);
+        //String args = (String) ast.APS.visit(this, o);
         
         // Generate call instruction
-        if (procName.equals("put")) {
+        if (procName.equals("putint")) {
+            String temp =(String) ast.APS.visit(this, o); // para el load de la variable.
             // Special case for output
-            llvmContext.addInstruction("call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.int, i32 0, i32 0), i32 " + args + ")");
+            llvmContext.addInstruction("call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.int, i32 0, i32 0), i32 " + temp + ")");
         } else {
-            llvmContext.addInstruction("call void @" + procName + "(" + (args != null ? args : "") + ")");
+            //llvmContext.addInstruction("call void @" + procName + "(" + (args != null ? args : "") + ")");
         }
         
         return null;
@@ -247,8 +249,9 @@ public class LLVMEncoder extends AbstractCodeGenerator implements Visitor {
     @Override
     public Object visitVnameExpression(VnameExpression ast, Object o) {
         String varName = ast.V.toString();
+        SimpleVname v =(SimpleVname) ast.V;
         String temp = llvmContext.generateTemporary();
-        llvmContext.addInstruction(temp + " = load i32, i32* %" + varName);
+        llvmContext.addInstruction(temp + " = load i32, i32* %" + v.I.spelling);
         return temp;
     }
     
@@ -295,7 +298,7 @@ public class LLVMEncoder extends AbstractCodeGenerator implements Visitor {
     // Add minimal implementations for other required visitor methods
     public Object visitArrayExpression(ArrayExpression ast, Object o) { return null; }
     public Object visitCallExpression(CallExpression ast, Object o) { return null; }
-    public Object visitCharacterExpression(CharacterExpression ast, Object o) { return null; }
+    public Object visitCharacterExpression(CharacterExpression ast, Object o) { return "nna"; }
     public Object visitEmptyExpression(EmptyExpression ast, Object o) { return null; }
     public Object visitIfExpression(IfExpression ast, Object o) { return null; }
     public Object visitLetExpression(LetExpression ast, Object o) { return null; }
@@ -313,21 +316,29 @@ public class LLVMEncoder extends AbstractCodeGenerator implements Visitor {
     public Object visitMultipleRecordAggregate(MultipleRecordAggregate ast, Object o) { return null; }
     public Object visitSingleRecordAggregate(SingleRecordAggregate ast, Object o) { return null; }
     
-    public Object visitConstFormalParameter(ConstFormalParameter ast, Object o) { return null; }
+    public Object visitConstFormalParameter(ConstFormalParameter ast, Object o) { return "wo"; }
     public Object visitFuncFormalParameter(FuncFormalParameter ast, Object o) { return null; }
     public Object visitProcFormalParameter(ProcFormalParameter ast, Object o) { return null; }
-    public Object visitVarFormalParameter(VarFormalParameter ast, Object o) { return null; }
+    public Object visitVarFormalParameter(VarFormalParameter ast, Object o) { return "wi"; }
     public Object visitEmptyFormalParameterSequence(EmptyFormalParameterSequence ast, Object o) { return null; }
     public Object visitMultipleFormalParameterSequence(MultipleFormalParameterSequence ast, Object o) { return null; }
-    public Object visitSingleFormalParameterSequence(SingleFormalParameterSequence ast, Object o) { return null; }
+    public Object visitSingleFormalParameterSequence(SingleFormalParameterSequence ast, Object o) { return "wowu"; }
     
-    public Object visitConstActualParameter(ConstActualParameter ast, Object o) { return null; }
-    public Object visitFuncActualParameter(FuncActualParameter ast, Object o) { return null; }
-    public Object visitProcActualParameter(ProcActualParameter ast, Object o) { return null; }
-    public Object visitVarActualParameter(VarActualParameter ast, Object o) { return null; }
-    public Object visitEmptyActualParameterSequence(EmptyActualParameterSequence ast, Object o) { return null; }
-    public Object visitMultipleActualParameterSequence(MultipleActualParameterSequence ast, Object o) { return null; }
-    public Object visitSingleActualParameterSequence(SingleActualParameterSequence ast, Object o) { return null; }
+    public Object visitConstActualParameter(ConstActualParameter ast, Object o) {
+        return ast.E.visit(this, o);
+        //return "de";
+            }
+    public Object visitFuncActualParameter(FuncActualParameter ast, Object o) { return "b"; }
+    public Object visitProcActualParameter(ProcActualParameter ast, Object o) { return "c"; }
+    public Object visitVarActualParameter(VarActualParameter ast, Object o) { return "d"; }
+    public Object visitEmptyActualParameterSequence(EmptyActualParameterSequence ast, Object o) { return "e"; }
+    public Object visitMultipleActualParameterSequence(MultipleActualParameterSequence ast, Object o) { return "f"; }
+    public Object visitSingleActualParameterSequence(SingleActualParameterSequence ast, Object o)
+    {
+        return ast.AP.visit(this, o);
+        
+        //return "g"; 
+    }
     
     public Object visitAnyTypeDenoter(AnyTypeDenoter ast, Object o) { return null; }
     public Object visitArrayTypeDenoter(ArrayTypeDenoter ast, Object o) { return null; }
@@ -340,12 +351,22 @@ public class LLVMEncoder extends AbstractCodeGenerator implements Visitor {
     public Object visitMultipleFieldTypeDenoter(MultipleFieldTypeDenoter ast, Object o) { return null; }
     public Object visitSingleFieldTypeDenoter(SingleFieldTypeDenoter ast, Object o) { return null; }
     
-    public Object visitCharacterLiteral(CharacterLiteral ast, Object o) { return null; }
-    public Object visitIdentifier(Identifier ast, Object o) { return null; }
+    public Object visitCharacterLiteral(CharacterLiteral ast, Object o) { return "we"; }
+    public Object visitIdentifier(Identifier ast, Object o) { 
+        //return ast.spelling;
+        return "wa"; 
+    }
     public Object visitIntegerLiteral(IntegerLiteral ast, Object o) { return null; }
     public Object visitOperator(Operator ast, Object o) { return null; }
     
     public Object visitDotVname(DotVname ast, Object o) { return null; }
-    public Object visitSimpleVname(SimpleVname ast, Object o) { return null; }
-    public Object visitSubscriptVname(SubscriptVname ast, Object o) { return null; }
+    public Object visitSimpleVname(SimpleVname ast, Object o) {
+        return "ab";
+        //String varName = ast.I.spelling;
+        
+        //return varName;
+        // Si la variable aún no tiene un nombre LLVM asignado, la registramos
+        //String llvmVarName = llvmContext.lookupVariable(varName);
+    }
+    public Object visitSubscriptVname(SubscriptVname ast, Object o) { return "cd"; }
 }
