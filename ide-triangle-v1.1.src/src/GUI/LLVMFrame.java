@@ -1,6 +1,14 @@
 package GUI;
 
+import Triangle.IDEMultiBackendCompiler;
+import Triangle.IDEMultiBackendCompiler.BackendType;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -13,6 +21,9 @@ public class LLVMFrame extends javax.swing.JFrame {
      */
     public LLVMFrame() {
         initComponents(); 
+        itemSaveLLVM.setEnabled(false);
+        itemCompileLLVMToNative.setEnabled(false);
+        itemRunMachineCode.setEnabled(false);
     }
 
     /**
@@ -36,7 +47,7 @@ public class LLVMFrame extends javax.swing.JFrame {
         itmeCompileLLVM = new javax.swing.JMenuItem();
         itemSaveLLVM = new javax.swing.JMenuItem();
         itemCompileLLVMToNative = new javax.swing.JMenuItem();
-        itemRunLLVM = new javax.swing.JMenuItem();
+        itemRunMachineCode = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("LLVM - Triangle");
@@ -97,14 +108,14 @@ public class LLVMFrame extends javax.swing.JFrame {
         });
         MenuLLVM.add(itemCompileLLVMToNative);
 
-        itemRunLLVM.setIcon(new javax.swing.ImageIcon(getClass().getResource("/GUI/Icons/iconTriangleRun.gif"))); // NOI18N
-        itemRunLLVM.setText("Ejecutar código LLVM en Shell");
-        itemRunLLVM.addActionListener(new java.awt.event.ActionListener() {
+        itemRunMachineCode.setIcon(new javax.swing.ImageIcon(getClass().getResource("/GUI/Icons/iconTriangleRun.gif"))); // NOI18N
+        itemRunMachineCode.setText("Ejecutar código LLVM en Shell");
+        itemRunMachineCode.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                itemRunLLVMActionPerformed(evt);
+                itemRunMachineCodeActionPerformed(evt);
             }
         });
-        MenuLLVM.add(itemRunLLVM);
+        MenuLLVM.add(itemRunMachineCode);
 
         jMenuBar1.add(MenuLLVM);
 
@@ -117,29 +128,117 @@ public class LLVMFrame extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Metodos ">
     
     private void itmeCompileLLVMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_itmeCompileLLVMActionPerformed
-        // TODO add your handling code here:
+        compileToLLVM();
     }//GEN-LAST:event_itmeCompileLLVMActionPerformed
 
     private void itemSaveLLVMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_itemSaveLLVMActionPerformed
-        // TODO add your handling code here:
+        
+        if (!llvmCodeGenerated || llvmTextArea.getText().trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No hay código LLVM para guardar.\nPrimero compila el código.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        javax.swing.JFileChooser chooser = new javax.swing.JFileChooser();
+        chooser.setDialogTitle("Guardar código LLVM");
+
+        // Obtener la ruta original del archivo .tri
+        String originalPath = sourceTextArea.getToolTipText();
+        if (originalPath != null && !originalPath.isEmpty()) {
+            File originalFile = new File(originalPath);
+            if (originalFile.exists()) {
+                chooser.setCurrentDirectory(originalFile.getParentFile());
+                chooser.setSelectedFile(new File(originalFile.getName().replace(".tri", ".ll")));
+            }
+        } else {
+            chooser.setSelectedFile(new File("output.ll")); // fallback
+        }
+
+        int result = chooser.showSaveDialog(this);
+        if (result == javax.swing.JFileChooser.APPROVE_OPTION) {
+            File file = chooser.getSelectedFile();
+            if (!file.getName().endsWith(".ll")) {
+                file = new File(file.getAbsolutePath() + ".ll");
+            }
+
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+                writer.write(llvmTextArea.getText());
+                JOptionPane.showMessageDialog(this, "Código LLVM guardado exitosamente.", "Guardado", JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error al guardar el archivo:\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }//GEN-LAST:event_itemSaveLLVMActionPerformed
 
     private void itemCompileLLVMToNativeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_itemCompileLLVMToNativeActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_itemCompileLLVMToNativeActionPerformed
 
-    private void itemRunLLVMActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_itemRunLLVMActionPerformed
+    private void itemRunMachineCodeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_itemRunMachineCodeActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_itemRunLLVMActionPerformed
+    }//GEN-LAST:event_itemRunMachineCodeActionPerformed
 
     /* ----------------------------------------------------------
-       Recibe el código fuente Triangle y lo muestra en la 1ª pestaña
-       ---------------------------------------------------------- */
-     public void setSourceText(String code) {
-         sourceTextArea.setText(code);
-         jTabbedPane1.setSelectedIndex(0);   // nos aseguramos de mostrar esa solapa
+    Recibe el código fuente Triangle y lo muestra en la 1ª pestaña
+    ---------------------------------------------------------- */
+    public void setSourceText(String code, String filePath) {
+        sourceTextArea.setText(code);
+        sourceTextArea.setToolTipText(filePath); // ? para recordar la ruta
+        jTabbedPane1.setSelectedIndex(0);
      }
-    
+        
+    public void compileToLLVM() {
+        String sourceCode = sourceTextArea.getText();
+        if (sourceCode == null || sourceCode.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No hay código fuente para compilar.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Crear archivo temporal .tri
+        File tempFile = null;
+        try {
+            tempFile = File.createTempFile("triangle_temp", ".tri");
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile))) {
+                bw.write(sourceCode);
+            }
+
+            // Compilar usando el multi-backend compiler con LLVM_IR
+            IDEMultiBackendCompiler compiler = new IDEMultiBackendCompiler();
+            boolean success = compiler.compileProgram(tempFile.getAbsolutePath(), BackendType.LLVM_IR);
+
+            if (success) {
+                String llvmFile = tempFile.getAbsolutePath().replace(".tri", ".ll");
+                String llvmCode = readFileAsString(llvmFile);
+                llvmTextArea.setText(llvmCode);
+                
+                llvmCodeGenerated = true; 
+                itemSaveLLVM.setEnabled(true);
+                itemCompileLLVMToNative.setEnabled(true);
+                // Cambiar a pestaña LLVM
+                jTabbedPane1.setSelectedIndex(1); 
+            } else {
+                JOptionPane.showMessageDialog(this, "Error al compilar a LLVM IR.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Excepción durante la compilación: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } finally {
+            if (tempFile != null) tempFile.delete();
+        }
+    }
+
+    // Método auxiliar para leer archivo
+    private String readFileAsString(String filePath) throws Exception {
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+        }
+        return sb.toString();
+    }
+     
     // [ End of Metodos ]
     // </editor-fold>
     
@@ -182,7 +281,7 @@ public class LLVMFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JMenu MenuLLVM;
     private javax.swing.JMenuItem itemCompileLLVMToNative;
-    private javax.swing.JMenuItem itemRunLLVM;
+    private javax.swing.JMenuItem itemRunMachineCode;
     private javax.swing.JMenuItem itemSaveLLVM;
     private javax.swing.JMenuItem itmeCompileLLVM;
     private javax.swing.JMenuBar jMenuBar1;
@@ -194,4 +293,5 @@ public class LLVMFrame extends javax.swing.JFrame {
     private javax.swing.JScrollPane sourceScroll;
     private javax.swing.JTextArea sourceTextArea;
     // End of variables declaration//GEN-END:variables
+    private boolean llvmCodeGenerated = false;
 }

@@ -630,7 +630,7 @@ public class Main extends javax.swing.JFrame {
             
             String filename = desktopPane.getSelectedFrame().getTitle();
             new File(filename.replace(".tri", ".tam")).delete();
-            new File(filename.replace(".tri", ".ll")).delete();
+            //new File(filename.replace(".tri", ".ll")).delete();
             
             output.setDelegate(delegateConsole);
             
@@ -650,6 +650,8 @@ public class Main extends javax.swing.JFrame {
                 
                 runMenuItem.setEnabled(currentBackend == BackendType.TAM || currentBackend == BackendType.BOTH);
                 buttonRun.setEnabled(currentBackend == BackendType.TAM || currentBackend == BackendType.BOTH);
+                
+                llvmWindowMenuItem.setEnabled(true);
                 
                 // Show success message with generated files
                 showCompilationResults(filename);
@@ -768,7 +770,7 @@ public class Main extends javax.swing.JFrame {
         //try { llvm.setSelected(true); } catch (java.beans.PropertyVetoException ignore) {}
 
         /* 4.  Copiar el c�digo fuente */
-        llvm.setSourceText(active.getSourcePaneText());       
+        llvm.setSourceText(active.getSourcePaneText(), active.getTitle());       
         
     }//GEN-LAST:event_llvmWindowMenuItemActionPerformed
 

@@ -42,7 +42,7 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="itemCompileLLVMToNativeActionPerformed"/>
               </Events>
             </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="itemRunLLVM">
+            <MenuItem class="javax.swing.JMenuItem" name="itemRunMachineCode">
               <Properties>
                 <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
                   <Image iconType="3" name="/GUI/Icons/iconTriangleRun.gif"/>
@@ -50,7 +50,7 @@
                 <Property name="text" type="java.lang.String" value="Ejecutar c&#xf3;digo LLVM en Shell"/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="itemRunLLVMActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="itemRunMachineCodeActionPerformed"/>
               </Events>
             </MenuItem>
           </SubComponents>
