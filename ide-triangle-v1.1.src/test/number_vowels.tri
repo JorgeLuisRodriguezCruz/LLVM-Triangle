@@ -1,0 +1,23 @@
+let
+  var flag: Boolean;
+  var ch: Char;
+  var count: Integer;
+  func isVowel(c: Char): Boolean ~
+    (c = 'a') \/ (c = 'e') \/ (c = 'i') \/ (c = 'o') \/ (c = 'u') \/
+    (c = 'A') \/ (c = 'E') \/ (c = 'I') \/ (c = 'O') \/ (c = 'U')
+in
+  begin
+    count := 0;
+    flag := true;
+    while flag do
+      begin
+        get(var ch);
+        if eol() then
+          flag := false    else       
+        if isVowel(ch) then
+          count := count + 1 else
+      end;
+    geteol();            
+    putint(count);
+    puteol()
+  end

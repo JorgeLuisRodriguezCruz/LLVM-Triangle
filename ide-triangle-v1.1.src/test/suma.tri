@@ -1,17 +1,9 @@
 let
-
    var i: Integer;
-
    var c: Char
-
 in
-
   begin
-
      i := 0;
-
      i := i + 1;
-
      putint(i)
-
   end

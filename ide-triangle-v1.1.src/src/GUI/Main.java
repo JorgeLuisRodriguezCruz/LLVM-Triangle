@@ -994,7 +994,7 @@ public class Main extends javax.swing.JFrame {
     clipBoard Clip = new clipBoard();                                       // Clipboard Management
     IDECompiler compiler = new IDECompiler();                               // Legacy Compiler - Analyzes/generates TAM programs  
     IDEMultiBackendCompiler multiCompiler = new IDEMultiBackendCompiler();  // Multi-Backend Compiler - Analyzes/generates TAM and LLVM IR
-    BackendType currentBackend = BackendType.BOTH;                          // Current selected backend
+    BackendType currentBackend = BackendType.TAM;                          // Current selected backend
     IDEDisassembler disassembler = new IDEDisassembler();                   // Disassembler - Generates TAM Code
     IDEInterpreter interpreter = new IDEInterpreter(delegateRun);           // Interpreter - Runs TAM programs
     OutputRedirector output = new OutputRedirector();                       // Redirects the console output

@@ -2,6 +2,8 @@ package GUI;
 
 import Triangle.IDEMultiBackendCompiler;
 import Triangle.IDEMultiBackendCompiler.BackendType;
+import Triangle.LLVMCompiler;
+import Triangle.LLVMCompilerEXE;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -9,11 +11,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
-
-/**
- *
- * @author rodri
- */
+ 
 public class LLVMFrame extends javax.swing.JFrame {
 
     /**
@@ -63,7 +61,6 @@ public class LLVMFrame extends javax.swing.JFrame {
 
         jTabbedPane1.addTab("Código fuente Triangle", sourceScroll);
 
-        llvmTextArea.setEditable(false);
         llvmTextArea.setColumns(20);
         llvmTextArea.setRows(5);
         llvmScroll.setViewportView(llvmTextArea);
@@ -170,16 +167,57 @@ public class LLVMFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_itemSaveLLVMActionPerformed
 
     private void itemCompileLLVMToNativeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_itemCompileLLVMToNativeActionPerformed
-        // TODO add your handling code here:
+        String llvmCode = llvmTextArea.getText();
+        if (llvmCode.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No hay código LLVM para compilar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            String basePath = sourceTextArea.getToolTipText().replace(".tri", "");
+            String exePath = LLVMCompilerEXE.compileLLVMToEXE(llvmCode, basePath);
+
+            String assembly = LLVMCompiler.compileLLVMToAssembly(llvmCode); 
+            machineTextArea.setText("=== Ensamblador generado ===\n" + assembly +
+                                    "\n\n=== Ejecutable generado ===\n" + exePath);
+            jTabbedPane1.setSelectedIndex(2);
+
+            // Habilitar ejecutar
+            itemRunMachineCode.setEnabled(true);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al compilar LLVM:\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
     }//GEN-LAST:event_itemCompileLLVMToNativeActionPerformed
 
     private void itemRunMachineCodeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_itemRunMachineCodeActionPerformed
-        // TODO add your handling code here:
+        String llvmCode = llvmTextArea.getText();
+        if (llvmCode.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No hay código LLVM para ejecutar.", "Advertencia", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        
+        try {
+            String basePath = sourceTextArea.getToolTipText().replace(".tri", "");
+            File exeFile = new File(basePath + "_ejecutables\\programa.exe");
+
+            if (!exeFile.exists()) {
+                JOptionPane.showMessageDialog(this, "No se encontró el ejecutable.\nPrimero compilá a código nativo.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Abrir terminal 
+            LLVMCompilerEXE.runEXEWithBat(exeFile.getAbsolutePath());
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error al ejecutar:\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_itemRunMachineCodeActionPerformed
 
-    /* ----------------------------------------------------------
-    Recibe el código fuente Triangle y lo muestra en la 1ª pestaña
-    ---------------------------------------------------------- */
+    /* 
+        Recibe el código fuente Triangle y lo muestra en la pestaña correspondiente
+    */
     public void setSourceText(String code, String filePath) {
         sourceTextArea.setText(code);
         sourceTextArea.setToolTipText(filePath); // ? para recordar la ruta
@@ -212,6 +250,7 @@ public class LLVMFrame extends javax.swing.JFrame {
                 
                 llvmCodeGenerated = true; 
                 itemSaveLLVM.setEnabled(true);
+                itemCompileLLVMToNative.setEnabled(true); 
                 itemCompileLLVMToNative.setEnabled(true);
                 // Cambiar a pestaña LLVM
                 jTabbedPane1.setSelectedIndex(1); 
