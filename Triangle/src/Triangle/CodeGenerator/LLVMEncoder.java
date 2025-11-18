@@ -12,6 +12,8 @@ import java.io.PrintWriter;
 
 import Triangle.ErrorReporter;
 import Triangle.AbstractSyntaxTrees.*;
+import Triangle.StdEnvironment;
+import java.awt.SystemColor;
 
 public class LLVMEncoder extends AbstractCodeGenerator implements Visitor {
     
@@ -75,8 +77,7 @@ public class LLVMEncoder extends AbstractCodeGenerator implements Visitor {
                 return "i32"; // Default fallback
         }
     }
-    
-    // Visitor methods for AST nodes
+
     
     @Override
     public Object visitProgram(Program ast, Object o) {
@@ -86,29 +87,50 @@ public class LLVMEncoder extends AbstractCodeGenerator implements Visitor {
     // Commands
     @Override
     public Object visitAssignCommand(AssignCommand ast, Object o) {
-        // Generate code for the expression
         String exprResult = (String) ast.E.visit(this, o);
-        
-        // Generate code for the variable assignment
-        String varName = ast.V.toString(); // Simplified
-        llvmContext.addInstruction("store i32 " + exprResult + ", i32* %" + varName);
+        String Type = (String) ast.E.type.visit(this, o);
+        String ptr = (String) ast.V.visit(this, o); 
+        llvmContext.addInstruction("store " + Type + " " + exprResult + ", " + Type + "* " + ptr);
         
         return null;
     }
     
     @Override
     public Object visitCallCommand(CallCommand ast, Object o) {
-        // Handle procedure calls
         String procName = ast.I.spelling;
-        
-        // Generate arguments
         String args = (String) ast.APS.visit(this, o);
-        
-        // Generate call instruction
-        if (procName.equals("put")) {
-            // Special case for output
-            llvmContext.addInstruction("call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.int, i32 0, i32 0), i32 " + args + ")");
-        } else {
+        if (procName.equals("putint")) {
+            llvmContext.addInstruction("call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.int, i32 0, i32 0), i32 " + args + ")");  
+        }
+        else if(procName.equals("put"))
+        {
+            if (args.startsWith("%")) {
+                String tmpLoad = llvmContext.generateTemporary();
+                String tmpExt = llvmContext.generateTemporary();
+                //llvmContext.addInstruction(tmpLoad + " = load i8, i8* " + args);
+                llvmContext.addInstruction(tmpExt + " = sext i8 " + args + " to i32");
+                
+                llvmContext.addInstruction("call i32 @putchar(i32 " + tmpExt + ")");
+            }
+            else if (args.startsWith("'")) {
+                int ascii = (int) args.charAt(1);
+                llvmContext.addInstruction("call i32 @putchar(i32 " + ascii + ")");
+            }
+            else {
+                llvmContext.addInstruction("call i32 @putchar(i32 " + args + ")");
+            }
+        }
+        else if(procName.equals("get"))
+        {
+                String tmpCall = llvmContext.generateTemporary();
+                String tmpTrunc = llvmContext.generateTemporary();
+                llvmContext.addInstruction(tmpCall + " = call i32 @getchar()");
+                // truncate to i8
+                llvmContext.addInstruction(tmpTrunc + " = trunc i32 " + tmpCall + " to i8");
+                // store i8 into pointer
+                llvmContext.addInstruction("store i8 " + tmpTrunc + ", i8* " + args);
+        }
+        else {
             llvmContext.addInstruction("call void @" + procName + "(" + (args != null ? args : "") + ")");
         }
         
@@ -122,28 +144,22 @@ public class LLVMEncoder extends AbstractCodeGenerator implements Visitor {
     
     @Override
     public Object visitIfCommand(IfCommand ast, Object o) {
-        // Generate condition
         String condition = (String) ast.E.visit(this, o);
         
-        // Generate labels
         String thenLabel = llvmContext.generateLabel();
         String elseLabel = llvmContext.generateLabel();
         String endLabel = llvmContext.generateLabel();
         
-        // Branch instruction
         llvmContext.addInstruction("br i1 " + condition + ", label %" + thenLabel + ", label %" + elseLabel);
         
-        // Then block
         llvmContext.addInstruction(thenLabel + ":");
         ast.C1.visit(this, o);
         llvmContext.addInstruction("br label %" + endLabel);
         
-        // Else block
         llvmContext.addInstruction(elseLabel + ":");
         ast.C2.visit(this, o);
         llvmContext.addInstruction("br label %" + endLabel);
         
-        // End block
         llvmContext.addInstruction(endLabel + ":");
         
         return null;
@@ -176,20 +192,16 @@ public class LLVMEncoder extends AbstractCodeGenerator implements Visitor {
         String bodyLabel = llvmContext.generateLabel();
         String endLabel = llvmContext.generateLabel();
         
-        // Jump to loop condition
         llvmContext.addInstruction("br label %" + loopLabel);
-        
-        // Loop condition
+
         llvmContext.addInstruction(loopLabel + ":");
         String condition = (String) ast.E.visit(this, o);
         llvmContext.addInstruction("br i1 " + condition + ", label %" + bodyLabel + ", label %" + endLabel);
         
-        // Loop body
         llvmContext.addInstruction(bodyLabel + ":");
         ast.C.visit(this, o);
         llvmContext.addInstruction("br label %" + loopLabel);
         
-        // End
         llvmContext.addInstruction(endLabel + ":");
         
         return null;
@@ -206,9 +218,10 @@ public class LLVMEncoder extends AbstractCodeGenerator implements Visitor {
         String left = (String) ast.E1.visit(this, o);
         String right = (String) ast.E2.visit(this, o);
         String result = llvmContext.generateTemporary();
-        String operator = ast.O.spelling;
+        String operator =(String) ast.O.visit(this, o);
         
         String llvmOp;
+        
         switch (operator) {
             case "+":
                 llvmOp = "add";
@@ -231,14 +244,26 @@ public class LLVMEncoder extends AbstractCodeGenerator implements Visitor {
             case ">":
                 llvmOp = "icmp sgt";
                 break;
+            case ">=":
+                llvmOp = "icmp sge";
+                break;
+            case "<=":
+                llvmOp = "icmp sle";
+                break;
+            case "\\/": 
+                llvmOp = "or"; 
+                break;
+            case "/\\": 
+                llvmOp = "and"; 
+                break;
             default:
-                llvmOp = "add"; // fallback
+                llvmOp = "FALTAAGREGAR"; // fallback
         }
         
         if (llvmOp.startsWith("icmp")) {
             llvmContext.addInstruction(result + " = " + llvmOp + " i32 " + left + ", " + right);
         } else {
-            llvmContext.addInstruction(result + " = " + llvmOp + " i32 " + left + ", " + right);
+            llvmContext.addInstruction(result + " = " + llvmOp + " "+ ast.E1.type.visit(this, o)+ " " + left + ", " + right);
         }
         
         return result;
@@ -246,21 +271,35 @@ public class LLVMEncoder extends AbstractCodeGenerator implements Visitor {
     
     @Override
     public Object visitVnameExpression(VnameExpression ast, Object o) {
-        String varName = ast.V.toString();
+        
+        String ptr = (String) ast.V.visit(this, o);
+
+        if (ptr.equals("true") || ptr.equals("false") || ptr.startsWith("'") || ptr.matches("[0-9]+"))   {
+            return ptr;
+        }
+        
+        if (ptr.startsWith("%") && !ptr.matches("%[a-zA-Z_][a-zA-Z0-9_]*")) {
+            return ptr;
+        }
+
+        String type = (String) ast.type.visit(this, o);   // i1, i8, i32
         String temp = llvmContext.generateTemporary();
-        llvmContext.addInstruction(temp + " = load i32, i32* %" + varName);
+
+        llvmContext.addInstruction(temp + " = load " + type + ", " + type + "* " + ptr);
         return temp;
+
     }
     
     // Declarations
     @Override
     public Object visitVarDeclaration(VarDeclaration ast, Object o) {
         String varName = ast.I.spelling;
-        String varType = mapTypeToLLVM("integer"); // Simplified type mapping
+        
+        String varType =(String) ast.T.visit(this, o); 
         
         llvmContext.addInstruction("%" + varName + " = alloca " + varType);
         
-        LLVMContext.LLVMValue value = new LLVMContext.LLVMValue("%" + varName, varType, false, false);
+        LLVMContext.LLVMValue value = new LLVMContext.LLVMValue(varName, varType, false, false);
         llvmContext.addVariable(varName, value);
         
         return null;
@@ -268,84 +307,290 @@ public class LLVMEncoder extends AbstractCodeGenerator implements Visitor {
     
     @Override
     public Object visitConstDeclaration(ConstDeclaration ast, Object o) {
-        String constName = ast.I.spelling;
+        String constName = (String) ast.I.visit(this, o);
         String constValue = (String) ast.E.visit(this, o);
-        
-        // In LLVM, we can handle constants as regular variables initialized with the constant value
-        String varType = mapTypeToLLVM("integer");
-        llvmContext.addInstruction("%" + constName + " = alloca " + varType);
-        llvmContext.addInstruction("store " + varType + " " + constValue + ", " + varType + "* %" + constName);
+        String varType = (String) ast.E.type.visit(this, o);
+
+        llvmContext.addInstruction( constName + " = alloca " + varType);
+        llvmContext.addInstruction("store " + varType + " " + constValue + ", " + varType + "* " + constName);
         
         LLVMContext.LLVMValue value = new LLVMContext.LLVMValue("%" + constName, varType, false, false);
         llvmContext.addVariable(constName, value);
         
         return null;
     }
-    
-    // Stub implementations for remaining visitor methods
-    // (These would need to be fully implemented for a complete compiler)
-    
+
     @Override
     public Object visitSequentialDeclaration(SequentialDeclaration ast, Object o) {
         ast.D1.visit(this, o);
         ast.D2.visit(this, o);
         return null;
     }
+
+    public Object visitArrayExpression(ArrayExpression ast, Object o) 
+    { 
+        
+        return  "AE-sin-implementar"; 
+    }
+    public Object visitCallExpression(CallExpression ast, Object o) 
+    {
+
+        String funcName = ast.I.spelling;  // add
+
+        String args =  (String) ast.APS.visit(this, o);  // "i32 3, i32 4"
+
+        String retType = (String) ast.type.visit(this, o);
+
+        String tmp = llvmContext.generateTemporary();
+
+        llvmContext.addInstruction(tmp + " = call " + retType + " @" + funcName + "(" + args + ")");
+
+        return tmp;
     
-    // Add minimal implementations for other required visitor methods
-    public Object visitArrayExpression(ArrayExpression ast, Object o) { return null; }
-    public Object visitCallExpression(CallExpression ast, Object o) { return null; }
-    public Object visitCharacterExpression(CharacterExpression ast, Object o) { return null; }
-    public Object visitEmptyExpression(EmptyExpression ast, Object o) { return null; }
-    public Object visitIfExpression(IfExpression ast, Object o) { return null; }
-    public Object visitLetExpression(LetExpression ast, Object o) { return null; }
-    public Object visitRecordExpression(RecordExpression ast, Object o) { return null; }
-    public Object visitUnaryExpression(UnaryExpression ast, Object o) { return null; }
+    }
     
-    public Object visitBinaryOperatorDeclaration(BinaryOperatorDeclaration ast, Object o) { return null; }
-    public Object visitFuncDeclaration(FuncDeclaration ast, Object o) { return null; }
-    public Object visitProcDeclaration(ProcDeclaration ast, Object o) { return null; }
-    public Object visitTypeDeclaration(TypeDeclaration ast, Object o) { return null; }
-    public Object visitUnaryOperatorDeclaration(UnaryOperatorDeclaration ast, Object o) { return null; }
     
-    public Object visitMultipleArrayAggregate(MultipleArrayAggregate ast, Object o) { return null; }
-    public Object visitSingleArrayAggregate(SingleArrayAggregate ast, Object o) { return null; }
-    public Object visitMultipleRecordAggregate(MultipleRecordAggregate ast, Object o) { return null; }
-    public Object visitSingleRecordAggregate(SingleRecordAggregate ast, Object o) { return null; }
+    public Object visitCharacterExpression(CharacterExpression ast, Object o) 
+    {
+        //retornar solo el ascii da error por alguna extraña razon
+        return ast.CL.spelling;
+    }
+    public Object visitEmptyExpression(EmptyExpression ast, Object o) { 
+        return null; 
+    }
     
-    public Object visitConstFormalParameter(ConstFormalParameter ast, Object o) { return null; }
-    public Object visitFuncFormalParameter(FuncFormalParameter ast, Object o) { return null; }
-    public Object visitProcFormalParameter(ProcFormalParameter ast, Object o) { return null; }
-    public Object visitVarFormalParameter(VarFormalParameter ast, Object o) { return null; }
-    public Object visitEmptyFormalParameterSequence(EmptyFormalParameterSequence ast, Object o) { return null; }
-    public Object visitMultipleFormalParameterSequence(MultipleFormalParameterSequence ast, Object o) { return null; }
-    public Object visitSingleFormalParameterSequence(SingleFormalParameterSequence ast, Object o) { return null; }
+    public Object visitIfExpression(IfExpression ast, Object o) { 
+        
+    String condition = (String) ast.E1.visit(this, o);
     
-    public Object visitConstActualParameter(ConstActualParameter ast, Object o) { return null; }
-    public Object visitFuncActualParameter(FuncActualParameter ast, Object o) { return null; }
-    public Object visitProcActualParameter(ProcActualParameter ast, Object o) { return null; }
-    public Object visitVarActualParameter(VarActualParameter ast, Object o) { return null; }
-    public Object visitEmptyActualParameterSequence(EmptyActualParameterSequence ast, Object o) { return null; }
-    public Object visitMultipleActualParameterSequence(MultipleActualParameterSequence ast, Object o) { return null; }
-    public Object visitSingleActualParameterSequence(SingleActualParameterSequence ast, Object o) { return null; }
+    String thenLabel = llvmContext.generateLabel();
+    String elseLabel = llvmContext.generateLabel();
+    String endLabel = llvmContext.generateLabel();
+    String resultTemp = llvmContext.generateTemporary();
     
-    public Object visitAnyTypeDenoter(AnyTypeDenoter ast, Object o) { return null; }
-    public Object visitArrayTypeDenoter(ArrayTypeDenoter ast, Object o) { return null; }
-    public Object visitBoolTypeDenoter(BoolTypeDenoter ast, Object o) { return null; }
-    public Object visitCharTypeDenoter(CharTypeDenoter ast, Object o) { return null; }
-    public Object visitErrorTypeDenoter(ErrorTypeDenoter ast, Object o) { return null; }
-    public Object visitSimpleTypeDenoter(SimpleTypeDenoter ast, Object o) { return null; }
-    public Object visitIntTypeDenoter(IntTypeDenoter ast, Object o) { return null; }
-    public Object visitRecordTypeDenoter(RecordTypeDenoter ast, Object o) { return null; }
-    public Object visitMultipleFieldTypeDenoter(MultipleFieldTypeDenoter ast, Object o) { return null; }
-    public Object visitSingleFieldTypeDenoter(SingleFieldTypeDenoter ast, Object o) { return null; }
+    llvmContext.addInstruction("br i1 " + condition + ", label %" + thenLabel + ", label %" + elseLabel);
     
-    public Object visitCharacterLiteral(CharacterLiteral ast, Object o) { return null; }
-    public Object visitIdentifier(Identifier ast, Object o) { return null; }
-    public Object visitIntegerLiteral(IntegerLiteral ast, Object o) { return null; }
-    public Object visitOperator(Operator ast, Object o) { return null; }
+    llvmContext.addInstruction(thenLabel + ":");
+    String thenResult = (String) ast.E2.visit(this, o);
+    llvmContext.addInstruction("br label %" + endLabel);
     
-    public Object visitDotVname(DotVname ast, Object o) { return null; }
-    public Object visitSimpleVname(SimpleVname ast, Object o) { return null; }
-    public Object visitSubscriptVname(SubscriptVname ast, Object o) { return null; }
+    llvmContext.addInstruction(elseLabel + ":");
+    String elseResult = (String) ast.E3.visit(this, o);
+    llvmContext.addInstruction("br label %" + endLabel);
+    
+    llvmContext.addInstruction(endLabel + ":");
+    llvmContext.addInstruction(resultTemp + " = phi i32 [ " + thenResult + ", %" + thenLabel + " ], [ " + elseResult + ", %" + elseLabel + " ]");
+    
+    return resultTemp; 
+    
+    }
+    
+    
+    public Object visitLetExpression(LetExpression ast, Object o) { 
+        llvmContext.pushScope();
+    
+        // Process declarations
+        ast.D.visit(this, o);
+
+        // Process expression
+        String result = (String) ast.E.visit(this, o);
+
+        llvmContext.popScope();
+        return result; 
+    
+    }
+    
+    
+    public Object visitRecordExpression(RecordExpression ast, Object o) {     // Para records, necesitamos allocar memoria y almacenar los campos
+    String recordType = (String) ast.type.visit(this, o);
+    String recordPtr = llvmContext.generateTemporary();
+
+    
+    llvmContext.addInstruction(recordPtr + " = alloca " + recordType);
+    
+    ast.RA.visit(this, recordPtr);
+    
+    return recordPtr;}
+    
+    
+    public Object visitUnaryExpression(UnaryExpression ast, Object o) { 
+        //ast.
+        return  "UE-sin-implementar"; }
+    
+    public Object visitBinaryOperatorDeclaration(BinaryOperatorDeclaration ast, Object o) { return  "BOD-sin-implementar"; }
+    
+    
+    public Object visitFuncDeclaration(FuncDeclaration ast, Object o) {
+        
+        
+       String name = ast.I.spelling;  // "add"
+       String retType = (String) ast.T.visit(this, o);  // i32
+
+       String params = (String) ast.FPS.visit(this, o);  // genera: "i32 %a, i32 %b"
+
+       llvmContext.startFunction(name, retType, params);
+
+       String result = (String) ast.E.visit(this, o);  // cuerpo
+       
+       
+
+       llvmContext.addInstruction("ret " + retType + " " + result);
+
+       llvmContext.endFunction();
+
+       return null;
+    }
+    
+    
+    
+    public Object visitProcDeclaration(ProcDeclaration ast, Object o) { return  "PD-sin-implementar"; }
+    public Object visitTypeDeclaration(TypeDeclaration ast, Object o) { return  "TD-sin-implementar"; }
+    
+    
+    public Object visitUnaryOperatorDeclaration(UnaryOperatorDeclaration ast, Object o) { return  "UOD-sin-implementar"; }
+    
+    public Object visitMultipleArrayAggregate(MultipleArrayAggregate ast, Object o) { return  "MAA-sin-implementar"; }
+    public Object visitSingleArrayAggregate(SingleArrayAggregate ast, Object o) { return  "SAA-sin-implementar"; }
+    public Object visitMultipleRecordAggregate(MultipleRecordAggregate ast, Object o) { return  "MRA-sin-implementar"; }
+    public Object visitSingleRecordAggregate(SingleRecordAggregate ast, Object o) { return  "SRA-sin-implementar"; }
+    
+    
+    
+    public Object visitConstFormalParameter(ConstFormalParameter ast, Object o) { 
+        return ast.T.visit(this, o) + " %" + ast.I.spelling;
+    }
+    
+    
+    public Object visitFuncFormalParameter(FuncFormalParameter ast, Object o) { return  "FFP-sin-implementar"; }
+    public Object visitProcFormalParameter(ProcFormalParameter ast, Object o) { return  "PFP-sin-implementar"; }
+    
+    
+    
+    public Object visitVarFormalParameter(VarFormalParameter ast, Object o) { 
+        return ast.T.visit(this, o) + " %" + ast.I.spelling;
+    }
+    public Object visitEmptyFormalParameterSequence(EmptyFormalParameterSequence ast, Object o) { 
+        return ""; 
+    }
+    public Object visitMultipleFormalParameterSequence(MultipleFormalParameterSequence ast, Object o) {
+        return ast.FP.visit(this, o) + ","+ ast.FPS.visit(this, o);
+    }
+    public Object visitSingleFormalParameterSequence(SingleFormalParameterSequence ast, Object o) { 
+        return ast.FP.visit(this, o);
+    }
+    
+    public Object visitConstActualParameter(ConstActualParameter ast, Object o) {
+        //return ast.E.type.visit(this, o) +" "+ ast.E.visit(this, o);
+        return ast.E.visit(this, o);
+    }
+    
+    
+    
+    public Object visitFuncActualParameter(FuncActualParameter ast, Object o) { return  "FAP-sin-implementar"; }
+    public Object visitProcActualParameter(ProcActualParameter ast, Object o) { return  "PAP-sin-implementar"; }
+    
+    
+    
+    public Object visitVarActualParameter(VarActualParameter ast, Object o) 
+    { 
+        SimpleVname v = (SimpleVname) ast.V;
+        return "%" + v.I.spelling; 
+    }
+    public Object visitEmptyActualParameterSequence(EmptyActualParameterSequence ast, Object o) 
+    {
+        return ""; 
+    }
+    public Object visitMultipleActualParameterSequence(MultipleActualParameterSequence ast, Object o) 
+    { 
+        return ast.AP.visit(this, o) + ","+ ast.APS.visit(this, o);
+    }
+    
+    
+    
+    public Object visitSingleActualParameterSequence(SingleActualParameterSequence ast, Object o)
+    {
+        return ast.AP.visit(this, o);
+    }
+    
+    public Object visitAnyTypeDenoter(AnyTypeDenoter ast, Object o) { return  "ATD-sin-implementar"; }
+    public Object visitArrayTypeDenoter(ArrayTypeDenoter ast, Object o) { return  "ATD2-sin-implementar"; }
+    
+    
+    
+    public Object visitBoolTypeDenoter(BoolTypeDenoter ast, Object o) {
+        return mapTypeToLLVM("bool");
+    }
+    
+    
+    public Object visitCharTypeDenoter(CharTypeDenoter ast, Object o) { 
+        return mapTypeToLLVM("char");
+    }
+    
+    
+    public Object visitErrorTypeDenoter(ErrorTypeDenoter ast, Object o) 
+    {  
+        return "i32";  
+    }
+    public Object visitSimpleTypeDenoter(SimpleTypeDenoter ast, Object o) { return  "STD-sin-implementar"; }
+    
+    
+    public Object visitIntTypeDenoter(IntTypeDenoter ast, Object o) { 
+        return mapTypeToLLVM("integer");
+    }
+    public Object visitRecordTypeDenoter(RecordTypeDenoter ast, Object o) { return "RTD-sin-implementar"; }
+    public Object visitMultipleFieldTypeDenoter(MultipleFieldTypeDenoter ast, Object o) { return  "MFTD-sin-implementar"; }
+    public Object visitSingleFieldTypeDenoter(SingleFieldTypeDenoter ast, Object o) { return  "SFTD-sin-implementar"; }
+    
+    
+    
+    
+    
+    public Object visitCharacterLiteral(CharacterLiteral ast, Object o) { 
+        return ast.spelling; 
+    }
+    public Object visitIdentifier(Identifier ast, Object o) { 
+        return ast.spelling;
+    }
+    public Object visitIntegerLiteral(IntegerLiteral ast, Object o) { 
+        return ast.spelling;
+    }
+    public Object visitOperator(Operator ast, Object o) {
+        return ast.spelling;  // es un simbolo como +,-,*,/, etc etc. Simplemente devuelve el operador como string.
+    }
+    
+    
+    public Object visitDotVname(DotVname ast, Object o) {   
+        String recordPtr = (String) ast.V.visit(this, o);
+        String fieldName = ast.I.spelling;
+    
+        String fieldPtr = llvmContext.generateTemporary();
+        llvmContext.addInstruction(fieldPtr + " = getelementptr inbounds i8, i8* " + recordPtr + ", i32 0");
+    
+        return fieldPtr;
+    }
+    
+    
+    
+    
+    public Object visitSimpleVname(SimpleVname ast, Object o) {
+        if ("true".equals(ast.I.spelling) || "false".equals(ast.I.spelling)) {
+            return ast.I.spelling; // literal boolean
+        }
+        return "%" + ast.I.spelling; 
+
+    }
+
+    public Object visitSubscriptVname(SubscriptVname ast, Object o) {
+    
+        String arrayPtr = (String) ast.V.visit(this, o);
+        String index = (String) ast.E.visit(this, o);
+
+        String elementPtr = llvmContext.generateTemporary();
+        llvmContext.addInstruction(elementPtr + " = getelementptr i32, i32* " + arrayPtr + ", i32 " + index);
+        return elementPtr;
+    }
+    
+    
 }
+
+

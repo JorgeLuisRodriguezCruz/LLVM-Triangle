@@ -1,0 +1,12 @@
+let
+  var a: Integer;
+  var b: Integer;
+  func min(x: Integer, y: Integer): Integer ~
+    if x < y then x else y
+in
+  begin
+    getint(var a);
+    getint(var b);
+    putint(min(a, b));
+    puteol()
+  end

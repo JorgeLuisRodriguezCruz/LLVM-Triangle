@@ -2,6 +2,18 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group/>
+        <group>
+            <file>file:/C:/Users/Royner/Documents/GitHub/LLVM-Triangle/Triangle/src/Triangle/CodeGenerator/LLVMContext.java</file>
+            <file>file:/C:/Users/Royner/Documents/GitHub/LLVM-Triangle/Triangle/src/Triangle/CodeGenerator/Encoder.java</file>
+            <file>file:/C:/Users/Royner/Documents/GitHub/LLVM-Triangle/Triangle/src/Triangle/AbstractSyntaxTrees/Vname.java</file>
+            <file>file:/C:/Users/Royner/Documents/GitHub/LLVM-Triangle/Triangle/src/Triangle/ContextualAnalyzer/Checker.java</file>
+            <file>file:/C:/Users/Royner/Documents/GitHub/LLVM-Triangle/Triangle/src/Triangle/AbstractSyntaxTrees/VnameExpression.java</file>
+            <file>file:/C:/Users/Royner/Documents/GitHub/LLVM-Triangle/Triangle/src/Triangle/CodeGenerator/ObjectAddress.java</file>
+            <file>file:/C:/Users/Royner/Documents/GitHub/LLVM-Triangle/Triangle/src/Triangle/AbstractSyntaxTrees/Expression.java</file>
+            <file>file:/C:/Users/Royner/Documents/GitHub/LLVM-Triangle/Triangle/src/Triangle/CodeGenerator/LLVMEncoder.java</file>
+            <file>file:/C:/Users/Royner/Documents/GitHub/LLVM-Triangle/Triangle/src/Triangle/SyntacticAnalyzer/Parser.java</file>
+            <file>file:/C:/Users/Royner/Documents/GitHub/LLVM-Triangle/Triangle/src/Triangle/SyntacticAnalyzer/Token.java</file>
+            <file>file:/C:/Users/Royner/Documents/GitHub/LLVM-Triangle/Triangle/src/Triangle/SyntacticAnalyzer/Scanner.java</file>
+        </group>
     </open-files>
 </project-private>

@@ -1,0 +1,10 @@
+! If más básico
+let
+   var edad: Integer
+in
+   begin
+      edad := 18;
+      if edad >= 18 then
+         put('T')
+      else put('F')
+   end

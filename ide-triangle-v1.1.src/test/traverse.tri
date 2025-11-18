@@ -1,25 +1,53 @@
-let
-  var flag: Boolean;
-  var ch: Char;
-  var count: Integer
-in
-  begin
-    count := 0;
-    flag := true;
-    while flag do
-      begin
-        get(var ch);
-        if eol() then
-          flag := false
-        else
-          begin 
-            count := count + 1;
-	    put(ch);
-            put(' ');
-            putint(count);   
-            puteol()
-          end
-      end;
-    geteol();
-    puteol()
+!Recibe un "String" y retorna el recorrido del mismo
+
+
+
+let
+
+  var flag: Boolean;
+
+  var ch: Char;
+
+  var count: Integer
+
+in
+
+  begin
+
+    count := 0;
+
+    flag := true;
+
+    while flag do
+
+      begin
+
+        get(var ch);
+
+        if eol() then
+
+          flag := false
+
+        else
+
+          begin 
+
+            count := count + 1;
+
+	    put(ch);
+
+            put(' ');
+
+            putint(count);   
+
+            puteol()
+
+          end
+
+      end;
+
+    geteol();
+
+    puteol()
+
   end

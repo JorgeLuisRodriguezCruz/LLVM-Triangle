@@ -1,0 +1,9 @@
+let
+   var i: Integer;
+   var c: Char
+in
+  begin
+     i := 3;
+     i := 4 + 1;
+     putint(i)
+  end

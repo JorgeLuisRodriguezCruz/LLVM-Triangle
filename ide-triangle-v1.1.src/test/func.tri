@@ -1,0 +1,8 @@
+let
+   func add(a: Integer, b: Integer):  Integer ~ a + b;
+   var i : Integer
+in
+ begin
+   i := add(3, 4);
+   putint(i)
+ end
