@@ -4,6 +4,7 @@ import Triangle.IDEMultiBackendCompiler;
 import Triangle.IDEMultiBackendCompiler.BackendType;
 import Triangle.LLVMCompiler;
 import Triangle.LLVMCompilerEXE;
+import Triangle.LLVMRunnerLLI;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -175,11 +176,10 @@ public class LLVMFrame extends javax.swing.JFrame {
 
         try {
             String basePath = sourceTextArea.getToolTipText().replace(".tri", "");
-            String exePath = LLVMCompilerEXE.compileLLVMToEXE(llvmCode, basePath);
+            //String exePath = LLVMCompilerEXE.compileLLVMToEXE(llvmCode, basePath);
 
             String assembly = LLVMCompiler.compileLLVMToAssembly(llvmCode); 
-            machineTextArea.setText("=== Ensamblador generado ===\n" + assembly +
-                                    "\n\n=== Ejecutable generado ===\n" + exePath);
+            machineTextArea.setText("=== Ensamblador generado ===\n" + assembly);
             jTabbedPane1.setSelectedIndex(2);
 
             // Habilitar ejecutar
@@ -197,21 +197,12 @@ public class LLVMFrame extends javax.swing.JFrame {
             return;
         }
 
-        
         try {
             String basePath = sourceTextArea.getToolTipText().replace(".tri", "");
-            File exeFile = new File(basePath + "_ejecutables\\programa.exe");
-
-            if (!exeFile.exists()) {
-                JOptionPane.showMessageDialog(this, "No se encontró el ejecutable.\nPrimero compilá a código nativo.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // Abrir terminal 
-            LLVMCompilerEXE.runEXEWithBat(exeFile.getAbsolutePath());
-
+            LLVMRunnerLLI.runLLVMWithLLI(llvmCode, basePath);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, "Error al ejecutar:\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error al ejecutar con lli:\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
         }
     }//GEN-LAST:event_itemRunMachineCodeActionPerformed
 

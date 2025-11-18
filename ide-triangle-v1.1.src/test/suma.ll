@@ -53,7 +53,7 @@ define i32 @main() {
 entry:
   %i = alloca i32
   %c = alloca i8
-  store i32 3, i32* %i
+  store i32 0, i32* %i
   %temp0 = load i32, i32* %i
   %temp1 = add i32 %temp0, 1
   store i32 %temp1, i32* %i

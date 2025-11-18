@@ -198,7 +198,6 @@ public class Main extends javax.swing.JFrame {
         triangleMenu = new javax.swing.JMenu();
         compileMenuItem = new javax.swing.JMenuItem();
         runMenuItem = new javax.swing.JMenuItem();
-        backendMenuItem = new javax.swing.JMenuItem();
         llvmWindowMenuItem = new javax.swing.JMenuItem();
         helpMenu = new javax.swing.JMenu();
         aboutMenuItem = new javax.swing.JMenuItem();
@@ -483,15 +482,6 @@ public class Main extends javax.swing.JFrame {
         });
         triangleMenu.add(runMenuItem);
 
-        backendMenuItem.setText("Select Backend...");
-        backendMenuItem.setToolTipText("Choose compilation backend (TAM, LLVM IR, or both)");
-        backendMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                selectBackendMenuItemActionPerformed(evt);
-            }
-        });
-        triangleMenu.add(backendMenuItem);
-
         llvmWindowMenuItem.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_F7, 0));
         llvmWindowMenuItem.setText("Ventana LLVM");
         llvmWindowMenuItem.setEnabled(false);
@@ -654,7 +644,7 @@ public class Main extends javax.swing.JFrame {
                 llvmWindowMenuItem.setEnabled(true);
                 
                 // Show success message with generated files
-                showCompilationResults(filename);
+                //showCompilationResults(filename);
             } else {
                 ((FileFrame)desktopPane.getSelectedFrame()).highlightError(multiCompiler.getErrorPosition());
                 runMenuItem.setEnabled(false);
@@ -770,42 +760,11 @@ public class Main extends javax.swing.JFrame {
         //try { llvm.setSelected(true); } catch (java.beans.PropertyVetoException ignore) {}
 
         /* 4.  Copiar el c�digo fuente */
-        llvm.setSourceText(active.getSourcePaneText(), active.getTitle());       
-        
+        llvm.setSourceText(active.getSourcePaneText(), active.getTitle());
+
     }//GEN-LAST:event_llvmWindowMenuItemActionPerformed
 
-    /**
-     * Handles the "Select Backend" menu option.
-     */    
-    private void selectBackendMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_selectBackendMenuItemActionPerformed
-        BackendSelectionDialog dialog = new BackendSelectionDialog(this);
-        dialog.setSelectedBackend(currentBackend);
-        
-        BackendType selectedBackend = dialog.showDialog();
-        if (selectedBackend != null && !dialog.wasCancelled()) {
-            currentBackend = selectedBackend;
-            
-            // Update the title bar to show current backend
-            String backendText = "";
-            switch (currentBackend) {
-                case TAM:
-                    backendText = " [TAM]";
-                    break;
-                case LLVM_IR:
-                    backendText = " [LLVM IR]";
-                    break;
-                case BOTH:
-                    backendText = " [TAM + LLVM IR]";
-                    break;
-            }
-            setTitle("IDE-Triangle 1.1" + backendText);
-            
-            // Show confirmation message
-            String message = "Backend changed to: " + getBackendDisplayName(currentBackend);
-            JOptionPane.showMessageDialog(this, message, "Backend Selection", JOptionPane.INFORMATION_MESSAGE);
-        }
-    }//GEN-LAST:event_selectBackendMenuItemActionPerformed
-        
+       
     /**
      * Get display name for backend type
      */
@@ -954,7 +913,6 @@ public class Main extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc=" GUI Variables ">
     // Variables declaration - do not modify//GEN-BEGIN:variables
     javax.swing.JMenuItem aboutMenuItem;
-    javax.swing.JMenuItem backendMenuItem;
     javax.swing.JButton buttonCompile;
     javax.swing.JButton buttonCopy;
     javax.swing.JButton buttonCut;

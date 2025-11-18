@@ -24,6 +24,7 @@ import Triangle.ContextualAnalyzer.Checker;
  */
 public class IDEMultiBackendCompiler {
 
+    // Atributos para testing
     public enum BackendType {
         TAM,
         LLVM_IR,
@@ -62,8 +63,7 @@ public class IDEMultiBackendCompiler {
             Checker checker = new Checker(report);
             checker.check(rootAST);
             if (report.numErrors == 0) {
-                System.out.println("Code Generation ...");
-                
+                //System.out.println("Code Generation ...");                
                 success = generateCode(sourceName, backendType);
             }
         }
@@ -120,14 +120,14 @@ public class IDEMultiBackendCompiler {
      */
     private boolean generateTAMCode(String sourceName) {
         try {
-            System.out.println("Generating TAM code...");
+            //System.out.println("Generating TAM code...");
             AbstractCodeGenerator tamEncoder = new Encoder(report);
             tamEncoder.encodeRun(rootAST, false);
             
             if (report.numErrors == 0) {
                 String tamFileName = sourceName.replace(".tri", tamEncoder.getFileExtension());
                 tamEncoder.saveObjectProgram(tamFileName);
-                System.out.println("TAM code saved to: " + tamFileName);
+                //System.out.println("TAM code saved to: " + tamFileName);
                 return true;
             }
         } catch (Exception e) {
@@ -137,11 +137,12 @@ public class IDEMultiBackendCompiler {
     }
 
     /**
-     * Generate LLVM IR code
+     * metodo de testing
+     * Generate LLVM IR code 
      */
     private boolean generateLLVMCode(String sourceName) {
         try {
-            System.out.println("Generating LLVM IR code...");
+            //System.out.println("Generating LLVM IR code...");
             AbstractCodeGenerator llvmEncoder = new LLVMEncoder(report);
             llvmEncoder.encodeRun(rootAST, false);
             
