@@ -1,0 +1,19 @@
+! Uso de if-then-else y while
+let
+   var i: Integer; 
+   var suma: Integer
+in
+   begin
+      i := 1;
+      suma := 0;
+      while i <= 10 do
+      begin
+         if i < 2 then
+            suma := suma + i
+         else
+            suma := suma + i * 2;
+         i := i + 1
+      end;
+      put('S');
+      putint(suma)
+   end

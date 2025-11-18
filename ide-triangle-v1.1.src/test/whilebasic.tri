@@ -1,0 +1,13 @@
+let
+  var flag: Boolean;
+  var ch: Char
+in
+  begin
+    flag := true;
+    while flag do
+      begin
+        get(var ch);
+	put(ch);
+        put(' ');
+      end;
+end
